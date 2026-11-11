@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en" data-houses="https://hudiyaresa.github.io/house-listing-gallery/" data-photos="https://hudiyaresa.github.io/house-listing-gallery/">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Peta Sekolah Jaktim</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="data/sekolah.js"></script>
+<script src="data/kelurahan.js"></script>
+<style>
+:root{--bg:#fff;--fg:#1f2937;--mut:#6b7280;--line:#e5e7eb;--soft:#f9fafb;--hover:#f3f4f6;--q:#374151;--warn:#b45309;--link:#2563eb;--input:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#111827;--fg:#e5e7eb;--mut:#9ca3af;--line:#374151;--soft:#1f2937;--hover:#1f2937;--q:#d1d5db;--warn:#fbbf24;--link:#93c5fd;--input:#0b1220}}
+:root[data-theme="dark"]{--bg:#111827;--fg:#e5e7eb;--mut:#9ca3af;--line:#374151;--soft:#1f2937;--hover:#1f2937;--q:#d1d5db;--warn:#fbbf24;--link:#93c5fd;--input:#0b1220}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font:13px/1.45 system-ui,Segoe UI,sans-serif;color:var(--fg);background:var(--bg);display:flex}
+a{color:var(--link)}
+#side{width:390px;overflow:auto;border-right:1px solid var(--line);padding:12px 14px;background:var(--bg)}
+#map{flex:1;background:var(--soft)}
+h1{font-size:17px;margin:0 0 4px}
+h2{font-size:12px;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.mut{color:var(--mut)}
+label{display:inline-block;margin:3px 10px 3px 0;cursor:pointer}
+label.b{display:block}
+.box{background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:6px 0}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px;flex:none}
+.item{padding:4px;border-radius:4px;cursor:pointer;display:flex;gap:6px;align-items:baseline}
+.item:hover{background:var(--hover)}
+.item .n{flex:1}
+.badge{font:600 10px/1 system-ui;color:#fff;border-radius:9px;padding:3px 5px;border:1.5px solid #fff;box-shadow:0 1px 3px #0006;white-space:nowrap}
+.leaflet-popup-content{font-size:12.5px;width:min(300px,78vw)!important;max-height:min(420px,55vh);overflow:auto}
+.leaflet-popup-content h3{margin:0 0 4px;font-size:14px}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip,.leaflet-tooltip{background:var(--bg);color:var(--fg)}
+.leaflet-tooltip{border-color:var(--line)}
+.leaflet-tooltip-top:before{border-top-color:var(--bg)}
+.leaflet-bar a{background:var(--bg);color:var(--fg);border-color:var(--line)}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--bg) 80%,transparent)!important;color:var(--mut)}
+table.kv td{padding:1px 6px 1px 0;vertical-align:top}
+table.kv td:first-child{color:var(--mut);white-space:nowrap}
+.q{border-left:3px solid var(--line);padding-left:6px;margin:4px 0;color:var(--q)}
+input[type=range]{width:100%}
+input[type=search],input[type=text]{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--input);color:var(--fg)}
+button{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--soft);color:var(--fg);cursor:pointer}
+button.on{background:#dc2626;color:#fff;border-color:#dc2626}
+.warn{color:var(--warn)}
+.est{color:var(--mut);font-style:italic}
+.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.thumb{width:100%;max-height:150px;object-fit:cover;border-radius:6px;margin:4px 0}
+#sheetBtn{display:none}
+.dark-tiles .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9)}
+@media (max-width:760px){
+  body{display:block}
+  #map{position:fixed;inset:0}
+  #side{position:fixed;left:0;right:0;bottom:0;z-index:1000;height:62vh;border-right:0;border-top:1px solid var(--line);
+        border-radius:14px 14px 0 0;box-shadow:0 -6px 20px #0004;transform:translateY(100%);transition:transform .25s;
+        padding:14px 16px calc(16px + env(safe-area-inset-bottom))}
+  body.open #side{transform:none}
+  #sheetBtn{display:block;position:fixed;z-index:1001;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));
+            padding:10px 18px;border-radius:22px;box-shadow:0 2px 10px #0005;font-weight:600}
+  body.open #sheetBtn{bottom:calc(62vh + 8px)}
+  label{margin:5px 12px 5px 0}
+  .leaflet-control-zoom{display:none}
+}
+</style>
+</head>
+<body>
+<div id="side">
+  <h1 data-t="title"></h1>
+  <div class="mut" id="stat"></div>
+
+  <h2 data-t="hSearch"></h2>
+  <input type="search" id="q">
+
+  <h2 data-t="hLevel"></h2>
+  <label><input type="checkbox" class="fj" value="PAUD" checked> <span data-t="lvPAUD"></span></label>
+  <label><input type="checkbox" class="fj" value="SD" checked> <span data-t="lvSD"></span></label>
+  <label><input type="checkbox" class="fj" value="SMP" checked> <span data-t="lvSMP"></span></label>
+  <label><input type="checkbox" class="fj" value="SMA" checked> <span data-t="lvSMA"></span></label>
+  <label><input type="checkbox" class="fj" value="SMK"> <span data-t="lvSMK"></span></label>
+  <h2 data-t="hFilter"></h2>
+  <label><input type="checkbox" class="fs" value="negeri" checked> <span data-t="negeri"></span></label>
+  <label><input type="checkbox" class="fs" value="swasta" checked> <span data-t="swasta"></span></label>
+  <label class="b"><input type="checkbox" id="fCam"> <span data-t="fCam"></span></label>
+  <label class="b"><input type="checkbox" id="fThr"> <span data-t="fThr"></span></label>
+  <label class="b"><input type="checkbox" id="fData"> <span data-t="fData"></span></label>
+  <label class="b"><input type="checkbox" id="fRank"> <span data-t="fRank"></span></label>
+  <div style="margin-top:6px"><span data-t="sppMax"></span> <b id="sppv"></b></div>
+  <input type="range" id="spp" min="0.5" max="10.5" step="0.5" value="10.5">
+  <div class="mut" data-t="sppNote"></div>
+
+  <h2 data-t="hZone"></h2>
+  <label class="b"><input type="checkbox" id="fZone" checked> <span data-t="fZone"></span></label>
+  <label class="b"><input type="checkbox" id="fCustom"> <span data-t="fCustom"></span></label>
+  <div id="customCtl" style="display:none">
+    <div class="row" style="margin:4px 0"><button id="placeBtn" data-t="place"></button><span class="mut" data-t="placeNote"></span></div>
+    <input type="text" id="zoneName" maxlength="40">
+  </div>
+  <div style="margin-top:6px"><span data-t="zoneR"></span> <b id="zrv">3.0 km</b></div>
+  <input type="range" id="zr" min="0.5" max="10" step="0.5" value="3">
+  <label class="b"><input type="checkbox" id="fInZone"> <span data-t="fInZone"></span></label>
+
+  <h2 data-t="hLayers"></h2>
+  <div><span data-t="radius"></span> <b id="radv">1.5 km</b></div>
+  <input type="range" id="rad" min="0.3" max="5" step="0.1" value="1.5">
+  <label class="b"><input type="checkbox" id="fRumah"> <span data-t="fRumah"></span></label>
+
+  <h2 data-t="hLegend"></h2>
+  <div class="mut" data-t="lgFill"></div>
+  <div class="row"><span><span class="dot" style="background:#eab308"></span><span data-t="lvPAUD"></span></span>
+    <span><span class="dot" style="background:#dc2626"></span><span data-t="lvSD"></span></span>
+    <span><span class="dot" style="background:#2563eb"></span><span data-t="lvSMP"></span></span>
+    <span><span class="dot" style="background:#06b6d4"></span><span data-t="lvSMA"></span></span>
+    <span><span class="dot" style="background:#64748b"></span><span data-t="lvSMK"></span></span>
+    <span><span class="dot" style="background:#7c3aed"></span><span data-t="lgCam"></span></span></div>
+  <div class="mut" style="margin-top:6px" data-t="lgRing"></div>
+  <div><span class="dot" style="background:#2563eb"></span><span data-t="lgNeg"></span></div>
+  <div><span class="dot" style="background:#2563eb80"></span><span data-t="lgSw"></span></div>
+  <div><span class="dot" style="background:#2563eb;box-shadow:0 0 0 3px #f59e0b"></span><span data-t="lgTop"></span></div>
+  <div><span class="dot" style="background:#2563eb;box-shadow:0 0 0 2.5px var(--fg)"></span><span data-t="lgFav"></span></div>
+  <div><span class="dot" style="background:#2563eb80;box-shadow:0 0 0 2.5px #ec4899"></span><span data-t="lgThr"></span></div>
+  <div class="mut" style="margin-top:6px" data-t="lgHouseH"></div>
+  <div><span class="dot" style="background:#16a34a;border:1px solid #14532d"></span><span data-t="lgHouse"></span></div>
+  <div><span class="dot" style="background:var(--bg);border:2px dashed #16a34a"></span><span data-t="lgHouseEst"></span></div>
+  <div class="mut" style="margin-top:4px" data-t="lgNote"></div>
+
+  <h2 data-t="hRules"></h2>
+  <div class="box" data-t="ruleDki"></div>
+  <div class="box" data-t="ruleJabar"></div>
+  <div class="warn" data-t="warnData"></div>
+
+  <h2><span data-t="hList"></span> <span class="mut" id="nlist"></span></h2>
+  <div id="list"></div>
+</div>
+<div id="map"></div>
+<button id="sheetBtn" data-t="sheet"></button>
+
+<script>
+const LANG = document.documentElement.lang === "en" ? "en" : "id";
+const I18N = {
+id: {
+  title:"Peta Sekolah Jaktim + Pondok Gede", hSearch:"Cari", search:"nama sekolah, mis. JISc, Al Azhar, SMAN 81", hLevel:"Jenjang",
+  lvPAUD:"TK/KB/RA", lvSD:"SD/MI", lvSMP:"SMP/MTs", lvSMA:"SMA/MA", lvSMK:"SMK", hFilter:"Status & filter", negeri:"Negeri", swasta:"Swasta",
+  fCam:"Hanya Cambridge / internasional", fThr:"Hanya yang dibicarakan di Threads", fData:"Hanya yang punya data biaya nyata",
+  fRank:"Hanya negeri berperingkat / favorit", sppMax:"SPP maksimal:", all:"semua",
+  sppNote:"Swasta disaring pakai batas bawah SPP (data nyata atau perkiraan). Negeri selalu lolos.",
+  hZone:"Zona", fZone:"Tampilkan zona", fCustom:"Zona custom (titik rumah incaran). Matikan untuk kembali ke tol Jatiwaringin.",
+  place:"📍 Taruh titik", placing:"Klik peta…", placeNote:"lalu klik peta; titik bisa digeser", zoneNamePh:"nama titik, mis. Rumah Pondok Kelapa",
+  zoneR:"Radius zona:", fInZone:"Hanya sekolah di dalam zona", tolName:"Tol Jatiwaringin", tolShort:"Tol JW", ta:"TA", customName:"Titik custom",
+  hLayers:"Radius & lapisan", radius:"Lingkaran saat sekolah diklik:", fRumah:"Listing rumah (galeri Threads, grup WA, rumah123 < 650 jt)",
+  hLegend:"Legenda", lgTop:"Lingkar emas: negeri top (SMA UTBK top-30 nasional, SMP TKA top-10 DKI, top-3 Kota Bekasi)",
+  lgFav:"Lingkar gelap: negeri favorit (berskor / sering disebut media)", lgNeg:"Isi pekat: negeri", lgCam:"Cambridge / internasional",
+  lgThr:"Lingkar pink: swasta ramai dibahas di Threads (3+ post)", lgSw:"Isi pucat: swasta", lgHouse:"Rumah, lokasi pasti (pin listing)",
+  lgHouseEst:"Rumah, lokasi perkiraan (titik tengah daerah)", lgHouseH:"Rumah", lgFill:"Warna isi = jenjang", lgRing:"Isi & lingkar = status",
+  lgNote:"Ukuran titik: TK kecil, SMA besar. Arahkan kursor (atau ketuk) untuk ringkasan SPP dan uang masuk. Klik sekolah negeri DKI: poligon gelap = Prioritas 1 (RT sekolah + RT yang bersinggungan), poligon terang = kelurahan sekolah + kelurahan tetangga.",
+  hRules:"Aturan SPMB 2026",
+  ruleDki:"<b>DKI Jakarta</b><br>Jalur domisili pakai wilayah RT/kelurahan, bukan jarak. SD: kuota domisili 77%, urut wilayah lalu usia (tertua dulu). SMP: urut wilayah lalu usia. SMA: urut nilai rapor dulu, baru wilayah. KK minimal 1 tahun sebelum daftar.",
+  ruleJabar:"<b>Kota Bekasi (SD/SMP) dan Jabar (SMA)</b><br>Urut jarak garis lurus terdekat. Kuota domisili SD 83%, SMP ~45%, SMA 35% (dalam rayon). Tidak ada batas km tetap.",
+  warnData:"Skor SMA = UTBK 2022 (data terakhir LTMPT). Biaya \"perkiraan\" berasal dari model per segmen, bukan dari sekolahnya; konfirmasi ke admisi.",
+  hList:"Sekolah di layar", top150:", 150 teratas", sheet:"☰ Filter & daftar", sheetClose:"✕ Tutup",
+  stat:(n,t)=>`${n} dari ${t} sekolah tampil. Data: datawan-labs/schools (Kemendikdasmen + Kemenag), biayasekolah.id, Threads.`,
+  kJenjang:"Jenjang", kSize:"Ukuran", kRank:"Peringkat", kFee:"Biaya", kCur:"Kurikulum", kLoc:"Lokasi", kAddr:"Alamat", kDist:"Ke", kPrio:"Prioritas", kZonasi:"Zonasi",
+  akr:"akreditasi", size:(p,g,r)=>`${p} murid, ${g} guru, ${r} rombel`, straight:"km garis lurus",
+  feeNeg:"SPP gratis (BOS/BOP); seragam, buku, kegiatan tetap bayar", masuk:"Uang masuk", spp:"SPP", perMo:"/bln", yearly:"rutin setahun",
+  brand:(n)=>`Mengacu brand/cabang yang sama (${n})`, brandNote:"cabang ini bisa berbeda",
+  est:"Perkiraan", estNote:(s)=>`model segmen "${s}", bukan data sekolah ini`, seg:{biasa:"sekolah biasa", a:"akreditasi A", premium:"brand/plus", intl:"internasional/Cambridge"},
+  tipNeg:"SPP gratis", tipMasuk:"masuk",
+  rkNas:(s,r)=>`UTBK ${s} (peringkat nasional ${r})`, rkBks:(s,r)=>`UTBK ${s} (#${r} SMA negeri Kota Bekasi)`, rkDki:(s,r)=>`TKA ${s} (#${r} SMP negeri se-DKI)`,
+  rkKec:(r,n,g,k)=>`#${r} dari ${n} ${g} negeri berdata di Kec. ${k}`,
+  src:{utbk:"UTBK 2022 (LTMPT top-1000, dikutip media 2024)", utbk_bks:"UTBK 2022 (LTMPT, daftar Kota Bekasi)", tka:"Rerata TKA SMP 2026 (Kemendikdasmen)", media:"Sering disebut favorit di daftar media 2026 (tanpa skor)"},
+  cam:{bs:"Cambridge (biayasekolah.id)", web:"Cambridge (riset web)", threads:"Cambridge? disebut bersama kata Cambridge di Threads, belum terverifikasi"},
+  spk:"SPK (sekolah kerja sama internasional)", kel:"Kel.", kec:"Kec.", prio:(n,k)=>`P1: ${n} RT. Kelurahan: ${k}`,
+  zonJabar:"Jabar/Kota Bekasi: urut jarak garis lurus. Lingkaran = radius slider.", thrFee:"Angka biaya yang disebut di Threads",
+  thr:(n)=>`<b>Threads:</b> nama ini muncul di ${n} post/balasan`, open:"buka", likes:"suka", official:"data resmi",
+  tagTop:"top", tagFav:"favorit", free:"gratis",
+  hPrice:"Harga", hLoc:"Lokasi", hEst:"(titik perkiraan)", hP1:"P1 (RT)", hKel:"Kelurahan", hKelN:(a,b,c)=>`${a} SD, ${b} SMP, ${c} SMA negeri`, hFavs:"favorit",
+  hSma:"SMA fav", hSmp:"SMP fav", hCam:"Cambridge", hOpen:"Buka listing", hNote:"Prioritas hanya untuk negeri DKI; yang menentukan alamat KK, bukan pin listing.",
+  hFail:"Gagal memuat data galeri rumah.", hSrc:"Sumber"
+},
+en: {
+  title:"School Map: East Jakarta + Pondok Gede", hSearch:"Search", search:"school name, e.g. JISc, Al Azhar, SMAN 81", hLevel:"Level",
+  lvPAUD:"Preschool (TK/KB/RA)", lvSD:"Primary (SD/MI)", lvSMP:"Junior high (SMP/MTs)", lvSMA:"Senior high (SMA/MA)", lvSMK:"Vocational (SMK)",
+  hFilter:"Status & filters", negeri:"Public", swasta:"Private",
+  fCam:"Cambridge / international only", fThr:"Only schools discussed on Threads", fData:"Only schools with real fee data",
+  fRank:"Only ranked / favorite public schools", sppMax:"Max monthly fee:", all:"any",
+  sppNote:"Private schools are filtered by the lower bound of the monthly fee (real data or estimate). Public schools always pass.",
+  hZone:"Zone", fZone:"Show zone", fCustom:"Custom zone (e.g. a house you are considering). Untick to go back to the Jatiwaringin toll gate.",
+  place:"📍 Drop pin", placing:"Click the map…", placeNote:"then click the map; the pin can be dragged", zoneNamePh:"pin name, e.g. House in Pondok Kelapa",
+  zoneR:"Zone radius:", fInZone:"Only schools inside the zone", tolName:"Jatiwaringin toll gate", tolShort:"JW toll gate", ta:"School year", customName:"Custom pin",
+  hLayers:"Radius & layers", radius:"Circle when a school is clicked:", fRumah:"House listings (house-listing-gallery: Threads, WhatsApp, rumah123)",
+  hLegend:"Legend", lgTop:"Gold ring: top public (senior high in national UTBK top 30, junior high in Jakarta TKA top 10, top 3 in Bekasi City)",
+  lgFav:"Dark ring: favorite public (scored / often listed by media)", lgNeg:"Solid fill: public", lgCam:"Cambridge / international",
+  lgThr:"Pink ring: private, widely discussed on Threads (3+ posts)", lgSw:"Pale fill: private", lgHouse:"House, exact location (listing pin)",
+  lgHouseEst:"House, approximate location (area center)", lgHouseH:"Houses", lgFill:"Fill color = level", lgRing:"Fill & ring = status",
+  lgNote:"Dot size: preschool small, senior high large. Hover (or tap) for a fee summary. Click a public school in Jakarta: dark polygon = Priority 1 (the school's RT plus touching RTs), light polygon = the school's kelurahan plus neighboring kelurahan.",
+  hRules:"Admission rules 2026 (SPMB)",
+  ruleDki:"<b>Jakarta</b><br>The domicile track uses RT/kelurahan zones, not distance. Primary: 77% domicile quota, ranked by zone then age (oldest first). Junior high: zone then age. Senior high: report-card grades first, then zone. The family card (KK) must be at least 1 year old.",
+  ruleJabar:"<b>Bekasi City (primary/junior) and West Java (senior high)</b><br>Ranked by straight-line distance. Domicile quota: primary 83%, junior high about 45%, senior high 35% (within the district). There is no fixed km limit.",
+  warnData:"Senior high scores are UTBK 2022 (the last LTMPT release). \"Estimated\" fees come from a per-segment model, not from the school; confirm with admissions.",
+  hList:"Schools in view", top150:", top 150", sheet:"☰ Filters & list", sheetClose:"✕ Close",
+  stat:(n,t)=>`Showing ${n} of ${t} schools. Data: datawan-labs/schools (Ministry of Education + Religious Affairs), biayasekolah.id, Threads.`,
+  kJenjang:"Level", kSize:"Size", kRank:"Ranking", kFee:"Fees", kCur:"Curriculum", kLoc:"Location", kAddr:"Address", kDist:"To", kPrio:"Priority", kZonasi:"Zoning",
+  akr:"accreditation", size:(p,g,r)=>`${p} students, ${g} teachers, ${r} classes`, straight:"km straight line",
+  feeNeg:"No tuition (state funded); uniforms, books and activities still cost money", masuk:"Entry fee", spp:"Tuition", perMo:"/mo", yearly:"recurring per year",
+  brand:(n)=>`Based on the same brand/campus (${n})`, brandNote:"this campus may differ",
+  est:"Estimate", estNote:(s)=>`"${s}" segment model, not this school's data`, seg:{biasa:"regular", a:"accreditation A", premium:"brand/plus", intl:"international/Cambridge"},
+  tipNeg:"no tuition", tipMasuk:"entry",
+  rkNas:(s,r)=>`UTBK ${s} (national rank ${r})`, rkBks:(s,r)=>`UTBK ${s} (#${r} public senior high in Bekasi City)`, rkDki:(s,r)=>`TKA ${s} (#${r} public junior high in Jakarta)`,
+  rkKec:(r,n,g,k)=>`#${r} of ${n} scored public ${g} in ${k} district`,
+  src:{utbk:"UTBK 2022 (LTMPT top 1000, cited by media in 2024)", utbk_bks:"UTBK 2022 (LTMPT, Bekasi City list)", tka:"Average junior high TKA 2026 (Ministry of Education)", media:"Often named a favorite in 2026 media lists (no score)"},
+  cam:{bs:"Cambridge (biayasekolah.id)", web:"Cambridge (web research)", threads:"Cambridge? mentioned together with the word Cambridge on Threads, not verified"},
+  spk:"SPK (international cooperation school)", kel:"Kel.", kec:"Kec.", prio:(n,k)=>`P1: ${n} RTs. Kelurahan: ${k}`,
+  zonJabar:"West Java/Bekasi: ranked by straight-line distance. Circle = radius slider.", thrFee:"Fees people quoted on Threads (Indonesian)",
+  thr:(n)=>`<b>Threads:</b> this name appears in ${n} posts/replies (quotes in Indonesian)`, open:"open", likes:"likes", official:"official record",
+  tagTop:"top", tagFav:"favorite", free:"free",
+  hPrice:"Price", hLoc:"Location", hEst:"(approximate pin)", hP1:"P1 (RT)", hKel:"Kelurahan", hKelN:(a,b,c)=>`${a} primary, ${b} junior, ${c} senior public`, hFavs:"favorites",
+  hSma:"Senior high", hSmp:"Junior high", hCam:"Cambridge", hOpen:"Open listing", hNote:"Priority zones only apply to public schools in Jakarta; the family card address counts, not the listing pin.",
+  hFail:"Could not load the house gallery data.", hSrc:"Source"
+}}[LANG];
+const T = I18N;
+
+const D = window.DATA_SEKOLAH, KEL = window.DATA_KEL || {};
+const TOL = {lat:-6.2500, lon:106.9110};
+const RAD = {PAUD:4, SD:5, SMP:6, SMA:7, SMK:6};
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const km = (a, b) => {const R=6371, t=Math.PI/180, dl=(b[0]-a[0])*t, dn=(b[1]-a[1])*t;
+  const h=Math.sin(dl/2)**2+Math.cos(a[0]*t)*Math.cos(b[0]*t)*Math.sin(dn/2)**2; return 2*R*Math.asin(Math.sqrt(h));};
+const jt = v => LANG === "en"
+  ? (v >= 1 ? "Rp " + (v >= 10 ? Math.round(v) : v.toFixed(1)) + "M" : "Rp " + Math.round(v*1000) + "k")
+  : (v >= 10 ? Math.round(v) + " jt" : v >= 1 ? v.toFixed(1).replace(".", ",") + " jt" : Math.round(v*1000) + " rb");
+const store = {get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } },
+               set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }};
+
+// ---- teks statis
+document.querySelectorAll("[data-t]").forEach(el => { el.innerHTML = T[el.dataset.t]; });
+document.title = T.title; $("q").placeholder = T.search; $("zoneName").placeholder = T.zoneNamePh; $("sppv").textContent = T.all;
+
+// ---- peta + tema
+const map = L.map("map", {preferCanvas:true, zoomControl:true}).setView([-6.265, 106.92], 14);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom:19, attribution:"&copy; OpenStreetMap"}).addTo(map);
+const mq = window.matchMedia("(prefers-color-scheme: dark)");
+const tema = () => $("map").classList.toggle("dark-tiles", mq.matches);
+tema(); mq.addEventListener ? mq.addEventListener("change", tema) : mq.addListener(tema);
+
+const sel = L.layerGroup().addTo(map), pts = L.layerGroup().addTo(map), badges = L.layerGroup().addTo(map), zoneLayer = L.layerGroup().addTo(map);
+let rumahLayer = null, current = null;
+
+// ---- zona: tol JW atau titik custom (disimpan di browser)
+let custom = store.get("zonaCustom");          // {lat, lon, name}
+const zr = store.get("zonaRadius"); if (zr) $("zr").value = zr;
+$("fCustom").checked = !!store.get("zonaCustomOn") && !!custom;
+if (custom && custom.name) $("zoneName").value = custom.name;
+const zona = () => $("fCustom").checked && custom ? {lat:custom.lat, lon:custom.lon, name:custom.name || T.customName, custom:true}
+                                                 : {lat:TOL.lat, lon:TOL.lon, name:T.tolName};
+const dz = s => km([zona().lat, zona().lon], [s.lat, s.lon]);
+let zMarker = null, placing = false;
+function drawZone(){
+  zoneLayer.clearLayers(); $("zrv").textContent = (+$("zr").value).toFixed(1) + " km";
+  $("customCtl").style.display = $("fCustom").checked ? "" : "none";
+  if (!$("fZone").checked) return;
+  const z = zona();
+  L.circle([z.lat, z.lon], {radius:+$("zr").value*1000, color:"#dc2626", weight:1.5, dashArray:"6 6", fill:false, interactive:false}).addTo(zoneLayer);
+  zMarker = L.marker([z.lat, z.lon], {draggable:!!z.custom, icon:L.divIcon({className:"", iconAnchor:[20,10],
+    html:`<span class="badge" style="background:#dc2626">${esc(z.custom ? "📍 " + z.name : T.tolShort)}</span>`})}).addTo(zoneLayer);
+  if (z.custom) zMarker.on("dragend", e => { const p = e.target.getLatLng(); setCustom(p.lat, p.lng); });
+}
+function setCustom(lat, lon){
+  custom = {lat:+lat.toFixed(6), lon:+lon.toFixed(6), name:$("zoneName").value.trim()};
+  store.set("zonaCustom", custom); store.set("zonaCustomOn", true);
+  $("fCustom").checked = true; drawZone(); draw();
+}
+$("fCustom").onchange = e => {
+  store.set("zonaCustomOn", e.target.checked);
+  if (e.target.checked && !custom) { const c = map.getCenter(); setCustom(c.lat, c.lng); return; }
+  drawZone(); draw();
+};
+$("placeBtn").onclick = () => { placing = !placing; $("placeBtn").classList.toggle("on", placing); $("placeBtn").textContent = placing ? T.placing : T.place;
+  if (placing && innerWidth <= 760) document.body.classList.remove("open"), $("sheetBtn").textContent = T.sheet; };
+map.on("click", e => { if (!placing) return; placing = false; $("placeBtn").classList.remove("on"); $("placeBtn").textContent = T.place; setCustom(e.latlng.lat, e.latlng.lng); });
+$("zoneName").oninput = () => { if (custom) { custom.name = $("zoneName").value.trim(); store.set("zonaCustom", custom); drawZone(); } };
+$("zr").oninput = () => { store.set("zonaRadius", +$("zr").value); drawZone(); if ($("fInZone").checked) draw(); };
+$("fZone").onchange = drawZone;
+
+// ---- sekolah
+const WJ = {PAUD:"#eab308", SD:"#dc2626", SMP:"#2563eb", SMA:"#06b6d4", SMK:"#64748b"};
+const FG = () => getComputedStyle(document.documentElement).getPropertyValue("--fg").trim() || "#1f2937";
+function warna(s){ return (s.cambridge || s.intl) && s.status === "swasta" ? "#7c3aed" : WJ[s.g] || "#64748b"; }
+function gaya(s){   // isi = jenjang, pekat/pucat = negeri/swasta, lingkar = top/favorit/ramai di Threads
+  const st = {radius:RAD[s.g]||5, fillColor:warna(s), fillOpacity:s.status === "negeri" ? .95 : .5, color:"#fff", weight:1};
+  if (s.tier === "top") Object.assign(st, {color:"#f59e0b", weight:3.5, radius:st.radius + 1});
+  else if (s.tier === "fav") Object.assign(st, {color:FG(), weight:2.5});
+  else if ((s.threads_n||0) >= 3) Object.assign(st, {color:"#ec4899", weight:2.5});
+  return st;
+}
+function skor(s){
+  return (s.tier === "top" ? 1000 : s.tier === "fav" ? 500 : 0) + (s.cambridge||s.intl ? 300 : 0)
+    + Math.min(s.threads_n||0, 50)*6 + (s.biaya.jenis === "data" ? 100 : 0) + (s.akr === "A" ? 20 : 0) + Math.min(s.pd||0, 1000)/100;
+}
+function lolos(s){
+  const fj = [...document.querySelectorAll(".fj:checked")].map(x => x.value);
+  const fs = [...document.querySelectorAll(".fs:checked")].map(x => x.value);
+  if (!fj.includes(s.g) || !fs.includes(s.status)) return false;
+  if ($("fCam").checked && !(s.cambridge || s.intl)) return false;
+  if ($("fThr").checked && !s.threads_n) return false;
+  if ($("fData").checked && s.biaya.jenis !== "data") return false;
+  if ($("fRank").checked && !s.tier) return false;
+  const max = +$("spp").value;
+  if (max <= 10 && s.status === "swasta" && s.biaya.spp[0] > max) return false;
+  if ($("fInZone").checked && dz(s) > +$("zr").value) return false;
+  const q = $("q").value.trim().toLowerCase();
+  if (q && !s.nama.toLowerCase().includes(q)) return false;
+  return true;
+}
+function feeShort(s){
+  const b = s.biaya;
+  if (b.jenis === "negeri") return T.tipNeg;
+  if (b.jenis === "data") return `${T.spp} ${jt(b.spp[0])}${T.perMo} · ${T.tipMasuk} ${jt(b.masuk[0])}`;
+  if (b.jenis === "brand") return `~${T.spp} ${jt(b.spp[0])}${T.perMo} · ${T.tipMasuk} ${jt(b.masuk[0])}`;
+  return `~${T.spp} ${jt(b.spp[0])}–${jt(b.spp[1])}${T.perMo} · ${T.tipMasuk} ${jt(b.masuk[0])}–${jt(b.masuk[1])}`;
+}
+function biayaHtml(s){
+  const b = s.biaya;
+  if (b.jenis === "negeri") return esc(T.feeNeg);
+  const link = `${b.ta ? T.ta + " " + esc(b.ta) + ", " : ""}<a href="${esc(b.url)}" target="_blank" rel="noopener">biayasekolah.id</a>`;
+  if (b.jenis === "data") return `${T.masuk} <b>${jt(b.masuk[0])}</b> · ${T.spp} <b>${jt(b.spp[0])}${T.perMo}</b>`
+    + (b.tahunan ? ` · ${T.yearly} ${jt(b.tahunan)}` : "") + `<br><span class="mut">${link}</span>`;
+  if (b.jenis === "brand") return `<span class="est">${esc(T.brand(b.dari))}: ${T.masuk} ${jt(b.masuk[0])}, ${T.spp} ${jt(b.spp[0])}${T.perMo}</span><br><span class="mut">${link}; ${T.brandNote}</span>`;
+  return `<span class="est">${T.est}: ${T.masuk} ${jt(b.masuk[0])}–${jt(b.masuk[1])}, ${T.spp} ${jt(b.spp[0])}–${jt(b.spp[1])}${T.perMo}</span><br><span class="mut">${esc(T.estNote(T.seg[b.seg]))}</span>`;
+}
+function rankText(s){
+  const r = [];
+  if (s.rnas) r.push(T.rkNas(s.skor, s.rnas)); else if (s.rkota) r.push(T.rkBks(s.skor, s.rkota));
+  else if (s.rdki) r.push(T.rkDki(s.skor, s.rdki)); else if (s.sumber) r.push(esc(T.src[s.sumber] || s.sumber));
+  if (s.rkec) r.push(T.rkKec(s.rkec, s.nkec, s.g, esc(s.kec)));
+  if (s.sumber && (s.rnas || s.rkota || s.rdki)) r.push(`<span class="mut">${esc(T.src[s.sumber])}</span>`);
+  return r.join("<br>");
+}
+function popup(s){
+  const z = zona();
+  let h = `<h3>${esc(s.nama)}</h3><table class="kv">
+    <tr><td>${T.kJenjang}</td><td>${esc(s.jenjang)} · ${T[s.status]}${s.akr ? " · " + T.akr + " " + esc(s.akr) : ""}</td></tr>`;
+  if (s.pd) h += `<tr><td>${T.kSize}</td><td>${T.size(s.pd, s.ptk, s.rombel)}</td></tr>`;
+  if (s.tier) h += `<tr><td>${T.kRank}</td><td>${rankText(s)}</td></tr>`;
+  h += `<tr><td>${T.kFee}</td><td>${biayaHtml(s)}</td></tr>`;
+  if (s.cambridge || s.intl) h += `<tr><td>${T.kCur}</td><td>${[s.jenjang.startsWith("SPK") ? T.spk : "", s.cambridge ? T.cam[s.cambridge] : ""].filter(Boolean).map(esc).join("; ")}</td></tr>`;
+  if (s.kel) h += `<tr><td>${T.kLoc}</td><td>${T.kel} ${esc(s.kel)}, ${T.kec} ${esc(s.kec)} (${esc(s.rtrw)})</td></tr>`;
+  else if (s.alamat) h += `<tr><td>${T.kAddr}</td><td>${esc(s.alamat)}</td></tr>`;
+  h += `<tr><td>${T.kDist} ${esc(z.custom ? z.name : T.tolShort)}</td><td>${dz(s).toFixed(1)} ${T.straight}</td></tr>`;
+  if (s.p3) h += `<tr><td>${T.kPrio}</td><td>${T.prio(s.p1n, s.p3.map(k => esc(k.split("|")[1])).join(", "))}</td></tr>`;
+  else if (s.status === "negeri" && s.prov === "Jabar") h += `<tr><td>${T.kZonasi}</td><td>${T.zonJabar}</td></tr>`;
+  h += `</table>`;
+  if (s.threads_biaya) h += `<div style="margin-top:6px"><b>${T.thrFee}</b>${s.threads_biaya.map(t => `<div class="q">${esc(t)}</div>`).join("")}</div>`;
+  if (s.threads_n) h += `<div style="margin-top:6px">${T.thr(s.threads_n)}${s.threads.map(p =>
+    `<div class="q">${esc(p.t)} <a href="https://www.threads.com/@${esc(p.u)}/post/${esc(p.c)}" target="_blank" rel="noopener">${T.open}</a> <span class="mut">(${p.l} ${T.likes})</span></div>`).join("")}</div>`;
+  if (s.npsn) h += `<div class="mut" style="margin-top:4px">NPSN ${esc(s.npsn)} · <a href="https://referensi.data.kemendikdasmen.go.id/pendidikan/npsn/${esc(s.npsn)}" target="_blank" rel="noopener">${T.official}</a></div>`;
+  return h;
+}
+function select(s){
+  current = s; sel.clearLayers();
+  const c = warna(s);
+  for (const k of s.p3 || []) if (KEL[k]) L.geoJSON(KEL[k], {style:{color:c, weight:1, fillOpacity:.07, dashArray:"3 4"}, interactive:false}).addTo(sel);
+  if (s.p1) L.geoJSON(s.p1, {style:{color:c, weight:2, fillOpacity:.35}, interactive:false}).addTo(sel);
+  L.circle([s.lat, s.lon], {radius:+$("rad").value*1000, color:"#6b7280", weight:1.2, fill:false, interactive:false}).addTo(sel);
+}
+function draw(){
+  pts.clearLayers(); badges.clearLayers();
+  let n = 0;
+  const vis = D.filter(lolos).sort((a, b) => skor(a) - skor(b));
+  for (const s of vis){
+    n++;
+    const m = L.circleMarker([s.lat, s.lon], gaya(s));
+    m.bindTooltip(() => `<b>${esc(s.nama)}</b><br>${esc(feeShort(s))}`, {direction:"top", offset:[0,-4]});
+    m.bindPopup(() => popup(s), {maxWidth:320, autoPanPaddingTopLeft:[10,10]}); m.on("click", () => select(s)); m.addTo(pts);
+    s._m = m;
+    if (s.tier) {
+      const lb = (s.g === "SMA" ? "A" : "P") + s.no + (s.prov === "Jabar" ? "B" : "");
+      L.marker([s.lat, s.lon], {icon:L.divIcon({className:"", iconAnchor:[-6, 18], html:`<span class="badge" style="background:${s.tier === "top" ? "#d97706" : "#374151"}">${lb}</span>`}), interactive:false}).addTo(badges);
+    }
+  }
+  $("stat").textContent = T.stat(n, D.length);
+  list();
+}
+function list(){
+  const b = map.getBounds();
+  const vis = D.filter(s => lolos(s) && b.contains([s.lat, s.lon])).sort((a, c) => skor(c) - skor(a));
+  $("nlist").textContent = `(${vis.length}${vis.length > 150 ? T.top150 : ""})`;
+  const el = $("list"); el.innerHTML = "";
+  for (const s of vis.slice(0, 150)){
+    const bi = s.biaya.jenis === "negeri" ? T.free : s.biaya.jenis === "data" ? T.spp + " " + jt(s.biaya.spp[0])
+      : s.biaya.jenis === "brand" ? "~" + jt(s.biaya.spp[0]) : "~" + jt(s.biaya.spp[0]) + "–" + jt(s.biaya.spp[1]);
+    const tag = [s.tier === "top" ? T.tagTop : s.tier === "fav" ? T.tagFav : "", s.threads_n ? `Threads ${s.threads_n}` : ""].filter(Boolean).join(" · ");
+    const div = document.createElement("div"); div.className = "item";
+    div.innerHTML = `<span class="dot" style="background:${warna(s)};opacity:${s.status === "negeri" ? 1 : .55}${s.tier === "top" ? ";box-shadow:0 0 0 2px #f59e0b" : ""}"></span><span class="n">${esc(s.nama)} <span class="mut">${esc(tag)}</span></span><span class="mut">${bi} · ${dz(s).toFixed(1)} km</span>`;
+    div.onclick = () => { if (innerWidth <= 760) toggleSheet(false); map.setView([s.lat, s.lon], Math.max(map.getZoom(), 15)); select(s); s._m && s._m.openPopup(); };
+    el.appendChild(div);
+  }
+}
+
+// ---- listing rumah: galeri Threads/WA/rumah123 (tanpa lelang)
+function inRing(pt, r){ let c=false; for (let i=0,j=r.length-1;i<r.length;j=i++){
+  const [xi,yi]=r[i],[xj,yj]=r[j]; if ((yi>pt[1])!==(yj>pt[1]) && pt[0]<(xj-xi)*(pt[1]-yi)/(yj-yi)+xi) c=!c; } return c; }
+function inGeom(pt, g){ const ps = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+  return ps.some(p => inRing(pt, p[0]) && !p.slice(1).some(h => inRing(pt, h))); }
+const PHOTOS = document.documentElement.dataset.photos || "";
+function rumahPopup(r){
+  const pt = [r.lon, r.lat];
+  const kelHit = new Set(Object.keys(KEL).filter(k => inGeom(pt, KEL[k])));
+  const p1 = [], p3 = {SD:0, SMP:0, SMA:0}, p3fav = [];
+  for (const s of D){
+    if (!s.p3) continue;
+    if (s.p1 && inGeom(pt, s.p1)) p1.push(s.nama);
+    else if (s.p3.some(k => kelHit.has(k))) { p3[s.g]++; if (s.tier) p3fav.push(s.nama); }
+  }
+  const near = f => D.filter(f).map(s => [km([r.lat,r.lon],[s.lat,s.lon]), s]).sort((a,b) => a[0]-b[0]).slice(0,3)
+    .map(([d,s]) => `${esc(s.nama)} ${d.toFixed(1)} km`).join("<br>");
+  const f = (r.foto || [])[0];
+  const img = f && f.t ? `<img class="thumb" loading="lazy" src="${esc(/^https?:/.test(f.t) ? f.t : PHOTOS + f.t)}" alt="">` : "";
+  const ukuran = [r.lt && "LT " + r.lt, r.lb && "LB " + r.lb, r.kt && "KT " + r.kt].filter(Boolean).join(" / ");
+  return `<h3>${esc(r.judul || r.komplek || r.lokasi || "Rumah")}</h3>${img}<table class="kv">
+    <tr><td>${T.hPrice}</td><td><b>${esc(r.harga || "?")}</b>${ukuran ? " · " + esc(ukuran) : ""}</td></tr>
+    <tr><td>${T.hLoc}</td><td>${esc(r.lokasi || r.wilayah || "")}${r.est ? ` <span class="warn">${T.hEst}</span>` : ""}</td></tr>
+    <tr><td>${T.hSrc}</td><td>${esc(r.sumber || "")}</td></tr>
+    <tr><td>${T.hP1}</td><td>${p1.length ? p1.map(esc).join(", ") : "-"}</td></tr>
+    <tr><td>${T.hKel}</td><td>${T.hKelN(p3.SD, p3.SMP, p3.SMA)}${p3fav.length ? "<br>" + T.hFavs + ": " + p3fav.map(esc).join(", ") : ""}</td></tr>
+    <tr><td>${T.hSma}</td><td>${near(s => s.g==="SMA" && s.tier)}</td></tr>
+    <tr><td>${T.hSmp}</td><td>${near(s => s.g==="SMP" && s.tier)}</td></tr>
+    <tr><td>${T.hCam}</td><td>${near(s => s.cambridge || s.intl)}</td></tr>
+    </table>${r.link ? `<a href="${esc(r.link)}" target="_blank" rel="noopener">${T.hOpen}</a>` : ""}
+    <div class="mut">${T.hNote}</div>`;
+}
+async function ambilRumah(){
+  const url = document.documentElement.dataset.houses;
+  const res = await fetch(url);
+  if (/\.json(\?|$)/.test(url)) { const j = await res.json(); return Array.isArray(j) ? j : j.items; }
+  const html = await res.text();   // halaman galeri publik: data ada di <script id="data">
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  return JSON.parse(doc.getElementById("data").textContent).items;
+}
+async function loadRumah(){
+  if (rumahLayer){ rumahLayer.addTo(map); return; }
+  try {
+    const items = await ambilRumah();
+    rumahLayer = L.layerGroup();
+    for (const r of items){
+      if (!r.lat || r.lat < -6.45 || r.lat > -6.10 || r.lon < 106.78 || r.lon > 107.10) continue;
+      const st = r.est ? {radius:6, color:"#16a34a", weight:2, dashArray:"3 3", fillColor:getComputedStyle(document.body).backgroundColor, fillOpacity:.9}
+                       : {radius:5, color:"#14532d", weight:1, fillColor:"#16a34a", fillOpacity:.9};
+      L.circleMarker([r.lat, r.lon], st)
+        .bindTooltip(`<b>${esc(r.harga || "?")}</b> · ${esc(r.lokasi || r.wilayah || "")}${r.est ? " " + T.hEst : ""}`, {direction:"top"})
+        .bindPopup(() => rumahPopup(r), {maxWidth:320}).addTo(rumahLayer);
+    }
+    rumahLayer.addTo(map);
+  } catch(e) { alert(T.hFail); $("fRumah").checked = false; }
+}
+
+// ---- panel bawah di HP
+function toggleSheet(open){
+  const o = open ?? !document.body.classList.contains("open");
+  document.body.classList.toggle("open", o); $("sheetBtn").textContent = o ? T.sheetClose : T.sheet;
+}
+$("sheetBtn").onclick = () => toggleSheet();
+
+document.querySelectorAll(".fj, .fs, #fCam, #fThr, #fData, #fRank, #fInZone").forEach(x => x.onchange = draw);
+let qt; $("q").oninput = () => { clearTimeout(qt); qt = setTimeout(draw, 250); };
+$("spp").oninput = e => { const v = +e.target.value; $("sppv").textContent = v > 10 ? T.all : jt(v) + T.perMo; clearTimeout(qt); qt = setTimeout(draw, 200); };
+$("rad").oninput = e => { $("radv").textContent = (+e.target.value).toFixed(1) + " km"; if (current) select(current); };
+$("fRumah").onchange = e => e.target.checked ? loadRumah() : rumahLayer && map.removeLayer(rumahLayer);
+map.on("moveend", list);
+drawZone();
+if ($("fCustom").checked && custom) map.setView([custom.lat, custom.lon], 14);
+draw();
+</script>
+</body>
+</html>
